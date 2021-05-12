@@ -84,4 +84,79 @@ public class Register {
         return true;
     }
 
+    @FXML
+    public void handleRegisterButtonAction() {
+        String email = emailField.getText();
+        String username = usernameField.getText();
+        String password = passwordField.getText();
+        String passwordConfirm = passwordFieldConfirm.getText();
+        loginMessage.setFill(Color.WHITE);
+        loginMessage.setFont(Font.font("Verdana", 12));
+
+        if(!checkArgs(email, username, password, passwordConfirm))
+        {
+            return;
+        }
+
+        // see if user is registered by checking the database file
+        BufferedReader reader;
+        try {
+            File userDatabase = new File("src/main/resources/database/users.db");
+            reader = new BufferedReader(new FileReader(
+                    userDatabase));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // read next line
+                String[] credentials = line.split(" ");
+                if(email.equals(credentials[0]))
+                {
+                    loginMessage.setText("Email address already exists!");
+                    return;
+                }
+
+                if(username.equals(credentials[1]))
+                {
+                    loginMessage.setText("Username already exists!");
+                    return;
+                }
+            }
+            reader.close();
+            File userInfo = new File("src/main/resources/database/" + username + "_info.db");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(userInfo, true));
+            writer.write("0.0\n");
+            writer.flush();
+            writer.close();
+
+            File userLibrary = new File("src/main/resources/database/" + username + "_library.db");
+            writer = new BufferedWriter(new FileWriter(userLibrary, true));
+            writer.flush();
+            writer.close();
+
+            Popup.Display("Registered", "Successfully registered!", "Log In");
+
+            writer = new BufferedWriter(new FileWriter(userDatabase, true));
+            String accountType = (devCheckBox.isSelected()) ? "dev" : "customer";
+            writer.write(email + " " + username + " " + password + " " + accountType + "\n");
+            writer.flush();
+
+            writer.close();
+
+            if(accountType.equals("dev"))
+            {
+                Teacher.openDev(username, (Stage) usernameField.getScene().getWindow());
+
+                return;
+            }
+            else
+            {
+                Student.openCustomer(username, (Stage) usernameField.getScene().getWindow());
+
+                return;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return;
+
+    }
 }
